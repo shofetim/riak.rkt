@@ -37,6 +37,19 @@
   (request "/"  'get "" accept))
 
 ;; Bucket Operations
+(define (list-buckets) ;;EXPENSIVE!
+  (request "/riak" 'get "?buckets=true" "Accept: application/json"))
+
+(define (list-keys bucket) ;;EXPENSIVE!
+  (request "/riak" 'get (string-append "/" bucket "?keys=true") "Accept: application/json"))
+
+(define (get-bucket bucket)
+  (request "/riak" 'get (string-append "/" bucket) "Accept: application/json"))
+
+(define (put-bucket bucket props)
+  (request (string-append "/riak/" bucket) 'put props "Content-Type: application/json"))
+
+
 
 
 
@@ -57,6 +70,20 @@
      (list "User-Agent: racket"
            headers
            (string-append "X-Riak-ClientId: " client-id)))]
+   [(eqv? 'put type)
+    (call/input-url
+     (string->url (string-append server path))
+     (λ (url)
+        (put-impure-port url 
+                         (string->bytes/utf-8 (jsexpr->json data))
+                         (list "User-Agent: racket"
+                               headers
+                               (string-append "X-Riak-ClientId: " client-id))))
+     (λ (ip)
+        (check-status ip)
+        (if (equal? (get-status ip) 204)
+            (read ip)
+            (read-json (remove-headers ip)))))]
    [(eqv? 'post type)
     (call/input-url
      (string->url (string-append server path))
@@ -75,8 +102,17 @@
 (define (check-status ip)
   (let* ([headers (purify-port ip)]
          [status (substring headers 9 12)])
-    (when (not (equal? status "200"))
+    (when (not (or (equal? status "200")
+                   (equal? status "204")))
       (error "Error server returned:" (string->number status)))))
+
+(define (get-status ip)
+  204
+  ;; (copy-port ip (current-output-port))
+  ;; (let* ([headers (purify-port ip)]
+  ;;        [status (substring headers 0 0)])
+  ;;   (string->number status))
+  )
 
 (define (remove-headers ip)
   (let* ([headers (purify-port ip)]
