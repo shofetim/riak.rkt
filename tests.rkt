@@ -13,6 +13,8 @@
 ;; (check-is-hash? (list-keys "test"))
 ;; (check-is-hash? (get-bucket "test"))
 ;; (check-equal? (put-bucket "test" (hasheq 'props (hasheq 'n_val 5))) '())
+;; (list-keys "test")
+(get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c")
 
 
 

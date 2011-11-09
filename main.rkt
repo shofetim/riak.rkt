@@ -3,6 +3,7 @@
 
 (require net/url
          net/uri-codec
+         net/head
          "json.rkt")
 
 ;; Settings
@@ -50,7 +51,8 @@
   (request (string-append "/riak/" bucket) 'put props "Content-Type: application/json"))
 
 ;; Object Operations
-
+(define (get-object bucket key)
+  (request "/riak" 'get (string-append "/" bucket "/" key)))
 
 
 
@@ -68,11 +70,18 @@
      (string->url (string-append server path data))
      get-impure-port
      (λ (ip)
-        (check-status ip)
-        (if (or (equal? path "/ping")
-                (equal? path ""))
-            (read (remove-headers ip))
-            (read-json (remove-headers ip))))
+        (let ([return-headers (extract-headers ip)])
+          (cond 
+           ;;User extract-headers to replace check-status, returning a
+           ;;hash with the status as a header, and the content type
+           ;;header as a key.  Handle the return value depending on
+           ;;the type, json via json read, scheme via read, binary as
+           ;;?
+           )
+          (if (or (equal? path "/ping")
+                  (equal? path ""))
+              (read (remove-headers ip))
+              (read-json (remove-headers ip)))))
      (list "User-Agent: racket"
            headers
            (string-append "X-Riak-ClientId: " client-id)))]
@@ -94,15 +103,15 @@
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
-           (post-pure-port url (string->bytes/utf-8 (jsexpr->json data))))
+        (post-pure-port url (string->bytes/utf-8 (jsexpr->json data))))
      (λ (ip)
-           (read-json ip)))]
+        (read-json ip)))]
    [(eqv? 'delete type)
     (call/input-url
      (string->url (string-append server path data))
      delete-pure-port
      (λ (ip)
-           (read-json ip)))]
+        (read-json ip)))]
    [else (error "http method not implemented")]))
 
 (define (check-status ip)
