@@ -69,19 +69,7 @@
     (call/input-url
      (string->url (string-append server path data))
      get-impure-port
-     (λ (ip)
-        (let ([return-headers (extract-headers ip)])
-          (cond 
-           ;;User extract-headers to replace check-status, returning a
-           ;;hash with the status as a header, and the content type
-           ;;header as a key.  Handle the return value depending on
-           ;;the type, json via json read, scheme via read, binary as
-           ;;?
-           )
-          (if (or (equal? path "/ping")
-                  (equal? path ""))
-              (read (remove-headers ip))
-              (read-json (remove-headers ip)))))
+     read-response
      (list "User-Agent: racket"
            headers
            (string-append "X-Riak-ClientId: " client-id)))]
@@ -94,38 +82,64 @@
                          (list "User-Agent: racket"
                                headers
                                (string-append "X-Riak-ClientId: " client-id))))
-     (λ (ip)
-        (check-status ip)
-        (if (eof-object? (peek-char ip))
-            '()
-            (read-json (remove-headers ip)))))]
+     read-response)]
    [(eqv? 'post type)
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
         (post-pure-port url (string->bytes/utf-8 (jsexpr->json data))))
-     (λ (ip)
-        (read-json ip)))]
+     read-response)]
    [(eqv? 'delete type)
     (call/input-url
      (string->url (string-append server path data))
      delete-pure-port
-     (λ (ip)
-        (read-json ip)))]
+     read-response)]
    [else (error "http method not implemented")]))
 
-(define (check-status ip)
-  (let* ([headers (purify-port ip)]
-         [status (substring headers 9 12)])
-    (when (not (or (equal? status "200")
-                   (equal? status "204")))
-      (error "Error server returned:" (string->number status)))))
 
-(define (remove-headers ip)
-  (let* ([headers (purify-port ip)]
-        [header-length (string-length headers)])
-    (for ([i (in-range 0 header-length)])
-         (read-char ip))
-    ip))
+(define (read-response ip)
+  (let* ([return-headers (parse-headers ip)]
+         [status (hash-ref return-headers "status")]
+         [content-type (hash-ref return-headers "Content-Type")])
+    (cond 
+     ;;Handle HTTP erros
+     [(> (string->number status) 299) (error "HTTP errored with:" status)]
+     ;;Choose a reader
+     [(eof-object? (peek-char ip)) '()]
+     [(equal? content-type "application/json") (read-json ip)]
+     [(equal? content-type "text/html") (read-text/html ip)]
+     [(equal? content-type "text/plain") (read-text/plain ip)]
+     [else (error "No reader for content type:" content-type)])))
+
+(define (parse-headers ip)
+  (let* ([header-string (purify-port ip)]
+         [status (substring header-string 9 12)]
+         [headers (rest (regexp-split #rx"\r\n" header-string))]
+         [alist-of-headers (map split-headers headers)])
+    (make-hash (cons (cons "status" status) alist-of-headers))))
+
+(define (split-headers str)
+  (let ([tuple (regexp-split #rx":" str)])
+    (if (equal? (car tuple) "")
+        (cons '() '())
+        (cons (car tuple) (remove-whitespace (cadr tuple))))))
+
+(define (remove-whitespace str)
+  (let ([1st (string-ref str 0)])
+    (if (char-whitespace? 1st)
+        (remove-whitespace (substring str 1))
+        str)))
+
+(define (read-text/html ip)
+  (read-text ip))
+
+(define (read-text/plain ip)
+  (read-text ip))
+
+(define (read-text ip)
+  (let ([out (open-output-string)])
+    (for ([line (in-lines ip)])
+         (write line out))
+    (get-output-string out)))
 
 (provide (all-defined-out))
