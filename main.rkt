@@ -54,12 +54,11 @@
 (define (get-object bucket key)
   (request "/riak" 'get (string-append "/" bucket "/" key)))
 
+(define (put-object bucket key data [headers "Content-Type: application/json"])
+  (request (string-append "/riak/" bucket "/" key) 'put data headers))
 
-
-
-
-
-
+(define (post-object bucket data [headers "Content-Type: application/json"])
+  (request (string-append "/riak/" bucket) 'post  data headers))
 
 
 ;;Private
@@ -87,15 +86,21 @@
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
-        (post-pure-port url (string->bytes/utf-8 (jsexpr->json data))))
+        (post-impure-port url (string->bytes/utf-8 (jsexpr->json data))
+                          (list "User-Agent: racket"
+                                headers
+                                (string-append "X-Riak-ClientId: " client-id))))
      read-response)]
    [(eqv? 'delete type)
     (call/input-url
      (string->url (string-append server path data))
-     delete-pure-port
+     (λ (url)
+        (delete-impure-port url
+                            (list "User-Agent: racket"
+                                  headers
+                                  (string-append "X-Riak-ClientId: " client-id))))
      read-response)]
    [else (error "http method not implemented")]))
-
 
 (define (read-response ip)
   (let* ([return-headers (parse-headers ip)]
@@ -141,5 +146,6 @@
     (for ([line (in-lines ip)])
          (write line out))
     (get-output-string out)))
+
 
 (provide (all-defined-out))
