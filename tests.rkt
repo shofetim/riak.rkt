@@ -32,3 +32,10 @@
 ;;                                          (hasheq 'bucket "_"
 ;;                                                  'tag "next"
 ;;                                                  'keep "1")))
+
+(check-equal? (mapreduce
+               (hasheq 'inputs "test"
+                       'query (list
+                               (hasheq 'link (hasheq 'bucket "test"))
+                               (hasheq 'map (hasheq 'language "javascript"
+                                                    'name "Riak.mapValuesJson"))))) '())

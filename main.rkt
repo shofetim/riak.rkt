@@ -85,6 +85,8 @@
                        (format-filters tail)))))
 
 ;;Map Reduce
+(define (mapreduce data)
+  (request (string-append "/mapred") 'post  data "Content-Type: application/json"))
 
 ;;Secondary indexes
 
