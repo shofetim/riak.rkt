@@ -60,6 +60,35 @@
 (define (post-object bucket data [headers "Content-Type: application/json"])
   (request (string-append "/riak/" bucket) 'post  data headers))
 
+(define (delete-object bucket key)
+  (request (string-append "/riak/" bucket "/" key) 'delete))
+
+;;Link Walking
+(define (get-link bucket key list-of-filters)
+  ;;List of filters is a list of 3 element hashes, bucket, tag, keep
+  (let ([data (format-filters list-of-filters)])
+    (request (string-append "/riak/" bucket "/" key) 
+             'get 
+             data)))
+
+(define (format-filters lst)
+  (if (empty? lst)
+      ""
+      (let ([head (car lst)]
+            [tail (rest lst)])
+        (string-append "/" 
+                       (hash-ref head 'bucket)
+                       ","
+                       (hash-ref head 'tag)
+                       ","
+                       (hash-ref head 'keep)
+                       (format-filters tail)))))
+
+;;Map Reduce
+
+;;Secondary indexes
+
+;;Luwak
 
 ;;Private
 (define (request path [type 'get] [data ""] [headers ""])
@@ -99,16 +128,23 @@
                             (list "User-Agent: racket"
                                   headers
                                   (string-append "X-Riak-ClientId: " client-id))))
-     read-response)]
+     (λ (ip) 
+        (read-response ip #t)))]
    [else (error "http method not implemented")]))
 
-(define (read-response ip)
+(define (read-response ip [is-delete #f])
   (let* ([return-headers (parse-headers ip)]
          [status (hash-ref return-headers "status")]
          [content-type (hash-ref return-headers "Content-Type")])
     (cond 
      ;;Handle HTTP erros
-     [(> (string->number status) 299) (error "HTTP errored with:" status)]
+     [(and is-delete ;;a 404 is ok for a delete
+           (or (= (string->number status) 404)
+               (and
+                (< (string->number status) 300)
+                (> (string->number status) 199)))) #t]
+     [(> (string->number status) 299)
+      (error "HTTP errored with:" status)]
      ;;Choose a reader
      [(eof-object? (peek-char ip)) (check-headers return-headers)]
      [(equal? content-type "application/json") (read-json ip)]
