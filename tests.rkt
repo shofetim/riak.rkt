@@ -32,10 +32,11 @@
 ;;                                          (hasheq 'bucket "_"
 ;;                                                  'tag "next"
 ;;                                                  'keep "1")))
-
-(check-equal? (mapreduce
-               (hasheq 'inputs "test"
-                       'query (list
-                               (hasheq 'link (hasheq 'bucket "test"))
-                               (hasheq 'map (hasheq 'language "javascript"
-                                                    'name "Riak.mapValuesJson"))))) '())
+;; (check-equal? (mapreduce
+;;                (hasheq 'inputs "test"
+;;                        'query (list
+;;                                (hasheq 'link (hasheq 'bucket "test"))
+;;                                (hasheq 'map (hasheq 'language "javascript"
+;;                                                     'name "Riak.mapValuesJson"))))) '())
+;; Expect a fail until Riak 1.0
+;;(check-exn exn:fail? (λ () (get-index "test" "this-is-a-key" "1"))) 

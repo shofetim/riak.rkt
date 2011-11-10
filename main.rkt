@@ -89,8 +89,17 @@
   (request (string-append "/mapred") 'post  data "Content-Type: application/json"))
 
 ;;Secondary indexes
+;;Only available in Riak 1.0 and latter
+(define (get-index bucket key value [value2 #f])
+  (let ([data (if value2
+                  (string-append value "/" value2)
+                  value)])
+    (request (string-append "/buckets/" bucket "/index/" key "/") 
+             'get
+             data)))
 
-;;Luwak
+;;Luwak (Large object storage)
+;;Not implemented (Probably wont be until it stabilizes, and I have a use for it)
 
 ;;Private
 (define (request path [type 'get] [data ""] [headers ""])
