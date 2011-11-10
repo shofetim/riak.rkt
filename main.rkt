@@ -110,7 +110,7 @@
      ;;Handle HTTP erros
      [(> (string->number status) 299) (error "HTTP errored with:" status)]
      ;;Choose a reader
-     [(eof-object? (peek-char ip)) '()]
+     [(eof-object? (peek-char ip)) (check-headers return-headers)]
      [(equal? content-type "application/json") (read-json ip)]
      [(equal? content-type "text/html") (read-text/html ip)]
      [(equal? content-type "text/plain") (read-text/plain ip)]
@@ -134,6 +134,14 @@
     (if (char-whitespace? 1st)
         (remove-whitespace (substring str 1))
         str)))
+
+(define (check-headers ahash)
+  (cond 
+   [(hash-has-key? ahash "Location") (extract-key (hash-ref ahash "Location"))]
+   [else '()]))
+
+(define (extract-key str)
+  (cadr (regexp-match #rx".*/(.*)$" str)))
 
 (define (read-text/html ip)
   (read-text ip))
