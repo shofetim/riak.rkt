@@ -203,4 +203,17 @@
     (get-output-string out)))
 
 
-(provide (all-defined-out))
+(provide ping
+         status
+         list-resources
+         list-buckets
+         list-keys
+         get-bucket
+         put-bucket
+         get-object
+         put-object
+         post-object
+         delete-object
+         get-link
+         mapreduce
+         get-index)
