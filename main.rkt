@@ -179,10 +179,7 @@
   (read-text ip))
 
 (define (read-text ip)
-  (let ([out (open-output-string)])
-    (for ([line (in-lines ip)])
-         (write line out))
-    (get-output-string out)))
+  (port->string ip))
 
 (provide ping
          status
