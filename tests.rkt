@@ -14,7 +14,9 @@
 (check-is-hash? (list-resources))
 (check-is-hash? (list-resources 'json))
 (check-pred string? (list-resources 'text))
-;; (check-is-hash? (list-buckets))
+(check-is-hash? (list-buckets))
+(check-equal? (list-buckets) #hasheq((buckets . ()))) ; clean riak install has no buckets
+
 ;; (check-is-hash? (list-keys "test"))
 ;; (check-is-hash? (get-bucket "test"))
 ;; (check-equal? (put-bucket "test" (hasheq 'props (hasheq 'n_val 5))) '())

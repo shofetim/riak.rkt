@@ -24,7 +24,7 @@
 
 ;; Bucket Operations
 (define (list-buckets) ;;EXPENSIVE!
-  (request "/riak" 'get "?buckets=true" "Accept: application/json"))
+  (request "/buckets" 'get "?buckets=true" "Accept: application/json"))
 
 (define (list-keys bucket) ;;EXPENSIVE!
   (request "/riak" 'get (string-append "/" bucket "?keys=true") "Accept: application/json"))
