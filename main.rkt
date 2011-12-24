@@ -1,38 +1,20 @@
 #lang racket
-;; API documentation http://wiki.basho.com/HTTP-API.html
-
 (require net/url
          net/uri-codec
          net/head
-         "json.rkt")
+         "json.rkt"
+         "config.rkt")
 
-;; Settings
-(define host "127.0.0.1")
-(define port "8091")
-(define protocol "http")
-(define server (string-append protocol "://" host ":" port))
-;; Default values for
-;; r: Number of nodes that must respond to a read
-;; w: Number of nodes that must respond to a write
-;; dw: Number of nodes that must write to durable storage.
-(define r 2)
-(define w 2)
-(define dw 2)
-;; A unique client id for the vector clocks
-(define client-id 
-  (string-append 
-   "rkt-" 
-     (number->string (random 4294967087))))
-
-
-
-;;;;; API
-;; Server Operations
+;; API
+;;Server Operations
 (define (ping)
   (request "/ping"))
 
-(define (status [accept "Accept: application/json"])
-  (request "/status" 'get "" accept))
+(define (status [format 'json])
+  (let ([accept-header (if (eq? format 'json)
+                            "Accept: application/json"
+                            "Accept: text/plain")])
+    (request "/stats" 'get "" accept-header)))
 
 (define (list-resources [accept "Accept: application/json"])
   (request "/"  'get "" accept))
@@ -98,10 +80,10 @@
              'get
              data)))
 
-;;Luwak (Large object storage)
-;;Not implemented (Probably wont be until it stabilizes, and I have a use for it)
-
 ;;Private
+
+(define server (string-append "http://" host ":" port))
+
 (define (request path [type 'get] [data ""] [headers ""])
   (cond
    [(eqv? 'get type)
@@ -201,7 +183,6 @@
     (for ([line (in-lines ip)])
          (write line out))
     (get-output-string out)))
-
 
 (provide ping
          status
