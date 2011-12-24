@@ -16,8 +16,11 @@
                             "Accept: text/plain")])
     (request "/stats" 'get "" accept-header)))
 
-(define (list-resources [accept "Accept: application/json"])
-  (request "/"  'get "" accept))
+(define (list-resources [format 'json])
+  (let ([accept-header (if (eq? format 'json)
+                            "Accept: application/json"
+                            "Accept: text/html")])
+    (request "/"  'get "" accept-header)))
 
 ;; Bucket Operations
 (define (list-buckets) ;;EXPENSIVE!

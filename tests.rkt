@@ -11,8 +11,9 @@
 (check-is-hash? (status)) ; Must have riak_kv_stat enabled for this
                           ; test, otherwise it is a 404
 (check-equal? (ping) "OK")
-
-;; (check-is-hash? (list-resources))
+(check-is-hash? (list-resources))
+(check-is-hash? (list-resources 'json))
+(check-pred string? (list-resources 'text))
 ;; (check-is-hash? (list-buckets))
 ;; (check-is-hash? (list-keys "test"))
 ;; (check-is-hash? (get-bucket "test"))
