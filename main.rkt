@@ -41,7 +41,7 @@
   (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
 
 (define (post-object bucket data [headers "Content-Type: application/json"])
-  (request (string-append "/buckets/" bucket) 'post  data headers))
+  (request (string-append "/riak/" bucket) 'post  data headers))
 
 (define (get-object bucket key)
   (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))
