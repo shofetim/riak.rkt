@@ -14,12 +14,15 @@
 (check-is-hash? (list-resources))
 (check-is-hash? (list-resources 'json))
 (check-pred string? (list-resources 'text))
+(check-equal? (put-bucket "test" (hasheq 'props (hasheq 'n_val 5))) '())
 (check-is-hash? (list-buckets))
-(check-equal? (list-buckets) #hasheq((buckets . ()))) ; clean riak install has no buckets
+(check-equal? (list-buckets) #hasheq((buckets . ("test")))) ;any way to delete a bucket?
+
+
 
 ;; (check-is-hash? (list-keys "test"))
 ;; (check-is-hash? (get-bucket "test"))
-;; (check-equal? (put-bucket "test" (hasheq 'props (hasheq 'n_val 5))) '())
+
 ;; (check-equal? (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c") "\"this is a test\"")
 ;; (check-is-key? (post-object "test" (hasheq 'isTest? #t)))
 ;; (check-equal? ((λ () 

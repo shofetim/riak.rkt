@@ -27,7 +27,7 @@
   (request "/buckets" 'get "?buckets=true" "Accept: application/json"))
 
 (define (list-keys bucket) ;;EXPENSIVE!
-  (request "/riak" 'get (string-append "/" bucket "?keys=true") "Accept: application/json"))
+  (request "/buckets" 'get (string-append "/" bucket "?keys=true") "Accept: application/json"))
 
 (define (get-bucket bucket)
   (request "/riak" 'get (string-append "/" bucket) "Accept: application/json"))
@@ -37,16 +37,16 @@
 
 ;; Object Operations
 (define (get-object bucket key)
-  (request "/riak" 'get (string-append "/" bucket "/" key)))
+  (request "/buckets" 'get (string-append "/" bucket "/" key)))
 
 (define (put-object bucket key data [headers "Content-Type: application/json"])
-  (request (string-append "/riak/" bucket "/" key) 'put data headers))
+  (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
 
 (define (post-object bucket data [headers "Content-Type: application/json"])
-  (request (string-append "/riak/" bucket) 'post  data headers))
+  (request (string-append "/buckets/" bucket) 'post  data headers))
 
 (define (delete-object bucket key)
-  (request (string-append "/riak/" bucket "/" key) 'delete))
+  (request (string-append "/buckets/" bucket "/" key) 'delete))
 
 ;;Link Walking
 (define (get-link bucket key list-of-filters)
