@@ -103,7 +103,9 @@
      (string->url (string-append server path))
      (λ (url)
         (put-impure-port url 
-                         (string->bytes/utf-8 (jsexpr->json data))
+                         (if (eq? headers "Content-Type: application/json")
+                             (string->bytes/utf-8 (jsexpr->json data))
+                             (string->bytes/utf-8 data))
                          (list "User-Agent: racket"
                                headers
                                (string-append "X-Riak-ClientId: " client-id))))

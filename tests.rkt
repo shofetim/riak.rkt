@@ -28,8 +28,12 @@
 (check-true ((λ () 
                  (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
                  (delete-object "test" "this-is-a-key"))))
+(check-equal? ((λ () 
+                 (put-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c" 
+                             "this is a test" "Content-Type: text/plain")
+                 (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c")))
+              "this is a test")
 
-;; (check-equal? (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c") "\"this is a test\"")
 ;; (check-is-key? (post-object "test" (hasheq 'isTest? #t)))
 ;; ;;Need to put some objects in first... else its a 404
 ;; ;; (get-link "test" "doc3"   (list (hasheq 'bucket "test"
