@@ -1,2 +1,27 @@
 * Racket interface to Riak's HTTP API
 
+** News
+   - Added license
+   - Updated functions to use newer URLs / endpoints
+   - New tests
+   - Improved support for different content types
+   - Removed all references to Luwak (as Basho is depreciating it)
+   - Restructured code to use external configuration file
+
+** TODO
+   - Handling of multi-part responses
+   - Control over additional put/fetch object parameters (r, w, dw, etc)
+   - More work on map reduce
+   - More work on link walking
+   - More work on secondary indexes
+   - Continued work on supporting various content-types (sexp and binary data)
+
+** Usage
+   Edit the connections settings in config.rkt
+   #+begin_src scheme
+      (require "main.rkt")
+   #+end_src
+
+   Have fun!
+
+   
