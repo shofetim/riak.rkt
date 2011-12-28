@@ -21,16 +21,16 @@
 (check-is-hash? (list-keys "test"))
 (check-is-hash? (get-bucket "test"))
 (check-is-hash? (hash-ref (get-bucket "test") 'props))
+(check-equal? ((λ ()
+                  (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
+                  (get-object "test" "this-is-a-key")))
+              #hasheq((isTest? . #t)))
+(check-true ((λ () 
+                 (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
+                 (delete-object "test" "this-is-a-key"))))
 
 ;; (check-equal? (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c") "\"this is a test\"")
 ;; (check-is-key? (post-object "test" (hasheq 'isTest? #t)))
-;; (check-equal? ((λ () 
-;;                    (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
-;;                    (get-object "test" "this-is-a-key")))
-;;               #hasheq((isTest? . #t)))
-;; (check-true ((λ () 
-;;                  (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
-;;                  (delete-object "test" "this-is-a-key"))))
 ;; ;;Need to put some objects in first... else its a 404
 ;; ;; (get-link "test" "doc3"   (list (hasheq 'bucket "test"
 ;; ;;                                                  'tag "_"

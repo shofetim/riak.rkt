@@ -37,17 +37,17 @@
   (request (string-append "/riak/" bucket) 'put props "Content-Type: application/json"))
 
 ;; Object Operations
-(define (get-object bucket key)
-  (request "/buckets" 'get (string-append "/" bucket "/" key)))
-
 (define (put-object bucket key data [headers "Content-Type: application/json"])
   (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
 
 (define (post-object bucket data [headers "Content-Type: application/json"])
   (request (string-append "/buckets/" bucket) 'post  data headers))
 
+(define (get-object bucket key)
+  (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))
+
 (define (delete-object bucket key)
-  (request (string-append "/buckets/" bucket "/" key) 'delete))
+  (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
 
 ;;Link Walking
 (define (get-link bucket key list-of-filters)
