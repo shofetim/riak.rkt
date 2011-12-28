@@ -19,8 +19,9 @@
 (check-equal? (list-buckets) #hasheq((buckets . ("test")))) ;any way to delete a bucket?
 (check-equal? (put-object "test" "Example" '()) '())
 (check-is-hash? (list-keys "test"))
+(check-is-hash? (get-bucket "test"))
+(check-is-hash? (hash-ref (get-bucket "test") 'props))
 
-;;(check-is-hash? (get-bucket "test"))
 ;; (check-equal? (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c") "\"this is a test\"")
 ;; (check-is-key? (post-object "test" (hasheq 'isTest? #t)))
 ;; (check-equal? ((λ () 
