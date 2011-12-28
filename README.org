@@ -8,7 +8,7 @@
    - Removed all references to Luwak (as Basho is depreciating it)
    - Restructured code to use external configuration file
 
-** TODO
+** To do
    - Handling of multi-part responses
    - Control over additional put/fetch object parameters (r, w, dw, etc)
    - More work on map reduce
