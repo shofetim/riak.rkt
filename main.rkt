@@ -30,18 +30,19 @@
   (request "/buckets" 'get (string-append "/" bucket "/keys?keys=true") 
            "Accept: application/json"))
 
-(define (get-bucket bucket)
-  (request "/riak" 'get (string-append "/" bucket) "Accept: application/json"))
+(define (get-bucket bucket [what "props"])
+  (request "/buckets" 'get (string-append "/" bucket "/" what) "Accept: application/json"))
 
 (define (put-bucket bucket props)
-  (request (string-append "/riak/" bucket) 'put props "Content-Type: application/json"))
+  (request (string-append "/buckets/" bucket "/props") 
+           'put props "Content-Type: application/json"))
 
 ;; Object Operations
 (define (put-object bucket key data [headers "Content-Type: application/json"])
   (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
 
 (define (post-object bucket data [headers "Content-Type: application/json"])
-  (request (string-append "/riak/" bucket) 'post  data headers))
+  (request (string-append "/buckets/" bucket "/keys") 'post  data headers))
 
 (define (get-object bucket key)
   (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))

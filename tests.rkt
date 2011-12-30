@@ -35,6 +35,7 @@
               "this is a test")
 (check-is-key? (post-object "test" (hasheq 'isTest? #t)))
 
+
 ;; ;;Need to put some objects in first... else its a 404
 ;; ;; (get-link "test" "doc3"   (list (hasheq 'bucket "test"
 ;; ;;                                                  'tag "_"
