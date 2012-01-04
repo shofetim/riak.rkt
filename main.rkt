@@ -12,36 +12,37 @@
 
 (define (status [format 'json])
   (let ([accept-header (if (eq? format 'json)
-                            "Accept: application/json"
-                            "Accept: text/plain")])
+                           (list "Accept: application/json")
+                           (list "Accept: text/plain"))])
     (request "/stats" 'get "" accept-header)))
 
 (define (list-resources [format 'json])
   (let ([accept-header (if (eq? format 'json)
-                            "Accept: application/json"
-                            "Accept: text/html")])
+                           (list "Accept: application/json")
+                           (list "Accept: text/html"))])
     (request "/"  'get "" accept-header)))
 
 ;; Bucket Operations
 (define (list-buckets) ;;EXPENSIVE!
-  (request "/buckets" 'get "?buckets=true" "Accept: application/json"))
+  (request "/buckets" 'get "?buckets=true" (list "Accept: application/json")))
 
 (define (list-keys bucket) ;;EXPENSIVE!
   (request "/buckets" 'get (string-append "/" bucket "/keys?keys=true") 
-           "Accept: application/json"))
+           (list "Accept: application/json")))
 
 (define (get-bucket bucket [what "props"])
-  (request "/buckets" 'get (string-append "/" bucket "/" what) "Accept: application/json"))
+  (request "/buckets" 'get (string-append "/" bucket "/" what) 
+           (list "Accept: application/json")))
 
 (define (put-bucket bucket props)
-  (request (string-append "/buckets/" bucket "/props") 
-           'put props "Content-Type: application/json"))
+  (request (string-append "/buckets/" bucket "/props")
+           'put props (list "Content-Type: application/json")))
 
 ;; Object Operations
-(define (put-object bucket key data [headers "Content-Type: application/json"])
+(define (put-object bucket key data [headers (list "Content-Type: application/json")])
   (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
 
-(define (post-object bucket data [headers "Content-Type: application/json"])
+(define (post-object bucket data [headers (list "Content-Type: application/json")])
   (request (string-append "/buckets/" bucket "/keys") 'post  data headers))
 
 (define (get-object bucket key)
@@ -50,6 +51,7 @@
 (define (delete-object bucket key)
   (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
 
+;;;; Needs more work
 ;;Link Walking
 (define (get-link bucket key list-of-filters)
   ;;List of filters is a list of 3 element hashes, bucket, tag, keep
@@ -84,50 +86,51 @@
     (request (string-append "/buckets/" bucket "/index/" key "/") 
              'get
              data)))
+;;;; end more work
 
 ;;Private
 
 (define server (string-append "http://" host ":" port))
 
-(define (request path [type 'get] [data ""] [headers ""])
+(define (request path [type 'get] [data ""] [headers (list "")])
   (cond
    [(eqv? 'get type)
     (call/input-url
      (string->url (string-append server path data))
      get-impure-port
      read-response
-     (list "User-Agent: racket"
-           headers
-           (string-append "X-Riak-ClientId: " client-id)))]
+     `(,@(cons "User-Agent: racket"
+               headers)
+       ,(string-append "X-Riak-ClientId: " client-id)))]
    [(eqv? 'put type)
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
         (put-impure-port url 
-                         (if (eq? headers "Content-Type: application/json")
+                         (if (member "Content-Type: application/json" headers)
                              (string->bytes/utf-8 (jsexpr->json data))
                              (string->bytes/utf-8 data))
-                         (list "User-Agent: racket"
-                               headers
-                               (string-append "X-Riak-ClientId: " client-id))))
+                         `(,@(cons "User-Agent: racket"
+                                   headers)
+                           ,(string-append "X-Riak-ClientId: " client-id))))
      read-response)]
    [(eqv? 'post type)
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
         (post-impure-port url (string->bytes/utf-8 (jsexpr->json data))
-                          (list "User-Agent: racket"
-                                headers
-                                (string-append "X-Riak-ClientId: " client-id))))
+                          `(,@(cons "User-Agent: racket"
+                                    headers)
+                            ,(string-append "X-Riak-ClientId: " client-id))))
      read-response)]
    [(eqv? 'delete type)
     (call/input-url
      (string->url (string-append server path data))
      (λ (url)
         (delete-impure-port url
-                            (list "User-Agent: racket"
-                                  headers
-                                  (string-append "X-Riak-ClientId: " client-id))))
+                            `(,@(cons "User-Agent: racket"
+                                      headers)
+                              ,(string-append "X-Riak-ClientId: " client-id))))
      (λ (ip) 
         (read-response ip #t)))]
    [else (error "http method not implemented")]))
