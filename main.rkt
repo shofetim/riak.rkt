@@ -39,11 +39,32 @@
            'put props (list "Content-Type: application/json")))
 
 ;; Object Operations
-(define (put-object bucket key data [headers (list "Content-Type: application/json")])
-  (request (string-append "/buckets/" bucket "/keys/" key) 'put data headers))
+(define (put-object bucket key data 
+                    [headers (list "Content-Type: application/json")] 
+                    [links '()])
+  (request (string-append "/buckets/" bucket "/keys/" key)
+           'put
+           data 
+           (if (eq? empty links)
+               headers
+               (cons
+                (make-link-header
+                 (make-link-pieces links))
+                headers))))
 
-(define (post-object bucket data [headers (list "Content-Type: application/json")])
-  (request (string-append "/buckets/" bucket "/keys") 'post  data headers))
+(define (post-object bucket 
+                     data 
+                     [headers (list "Content-Type: application/json")]
+                     [links '()])
+  (request (string-append "/buckets/" bucket "/keys") 
+           'post
+           data 
+           (if (eq? empty links)
+               headers
+               (cons
+                (make-link-header
+                 (make-link-pieces links))
+                headers))))
 
 (define (get-object bucket key)
   (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))
@@ -52,6 +73,10 @@
   (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
 
 ;;;; Needs more work
+;; Write tests for setting links
+;; Link walking needs to handle mime-multipart
+;; get-object should return links
+
 ;;Link Walking
 (define (get-link bucket key list-of-filters)
   ;;List of filters is a list of 3 element hashes, bucket, tag, keep
@@ -118,7 +143,10 @@
     (call/input-url
      (string->url (string-append server path))
      (λ (url)
-        (post-impure-port url (string->bytes/utf-8 (jsexpr->json data))
+        (post-impure-port url 
+                          (if (member "Content-Type: application/json" headers)
+                              (string->bytes/utf-8 (jsexpr->json data))
+                              (string->bytes/utf-8 data))
                           `(,@(cons "User-Agent: racket"
                                     headers)
                             ,(string-append "X-Riak-ClientId: " client-id))))
@@ -190,6 +218,32 @@
 
 (define (read-text ip)
   (port->string ip))
+
+;; list of lists -> list of strings
+;; (list (list 'bucket 'key 'tag) (list 'bucket 'key 'tag)) -> 
+;; (list <PATH>; riaktag="TAG" <PATH>; riaktag="TAG")
+(define (make-link-pieces lst)
+  (if (eq? empty lst)
+      empty
+      (cons
+       (format "</buckets/~a/keys/~a>; riaktag=\"~a\"" 
+               (first (first lst)) (second (first lst)) (third (first lst)))
+       (make-link-pieces (rest lst)))))
+
+(define (weave lst spacer)
+  (cond [(eq? empty lst) empty]
+        [(= (length lst) 1)
+         (cons (first lst)
+               (weave (rest lst) spacer))]
+        [else (cons (string-append (first lst) spacer)
+                    (weave (rest lst) spacer))]))
+
+;;(list <PATH>; riaktag="TAG" <PATH>; riaktag="TAG") -> string
+(define (make-link-header lst)
+  (let* ([spacer ", "]
+         [spaced-lst (weave lst spacer)])
+    (format "Link: ~a" 
+            (apply string-append spaced-lst))))
 
 (provide ping
          status
