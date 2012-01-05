@@ -31,8 +31,11 @@
            (list "Accept: application/json")))
 
 (define (get-bucket bucket [what "props"])
-  (request "/buckets" 'get (string-append "/" bucket "/" what) 
-           (list "Accept: application/json")))
+  (let ([props-or-keys (if (eq? what "keys")
+                           "keys?keys=true"
+                           what)])
+    (request "/buckets" 'get (string-append "/" bucket "/" props-or-keys) 
+             (list "Accept: application/json"))))
 
 (define (put-bucket bucket props)
   (request (string-append "/buckets/" bucket "/props")
