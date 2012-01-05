@@ -171,7 +171,7 @@
          [status (hash-ref return-headers "status")]
          [content-type (hash-ref return-headers "Content-Type")])
     (hash 'headers return-headers
-          'message
+          'body
           (cond 
            ;;Handle HTTP erros
            [(and is-delete ;;a 404 is ok for a delete

@@ -1,39 +1,46 @@
 #lang racket/base
+
 (require rackunit
          "main.rkt")
 
+;;Define additional checks
 (define-simple-check (check-is-hash? p)
   (hash? p))
 
 (define-simple-check (check-is-key? p)
   (string? p))
 
-(check-is-hash? (status)) ; Must have riak_kv_stat enabled for this
-                          ; test, otherwise it is a 404
-(check-equal? (ping) "OK")
-(check-is-hash? (list-resources))
-(check-is-hash? (list-resources 'json))
-(check-pred string? (list-resources 'text))
-(check-equal? (put-bucket "test" (hasheq 'props (hasheq 'n_val 5))) '())
-(check-is-hash? (list-buckets))
-(check-equal? (list-buckets) #hasheq((buckets . ("test")))) ;any way to delete a bucket?
-(check-equal? (put-object "test" "Example" '()) '())
-(check-is-hash? (list-keys "test"))
-(check-is-hash? (get-bucket "test"))
-(check-is-hash? (hash-ref (get-bucket "test") 'props))
+;;Helper functions
+(define (get-body ahash)
+  (hash-ref ahash 'body))
+
+;;;;Tests
+;;Low level API
+(check-is-hash? (get-body (status)))    ; Must have riak_kv_stat enabled
+(check-equal? (get-body (ping)) "OK")
+(check-is-hash? (get-body (list-resources)))
+(check-is-hash? (get-body (list-resources 'json)))
+(check-pred string? (get-body (list-resources 'text)))
+(check-equal? (get-body (put-bucket "test" (hasheq 'props (hasheq 'n_val 5)))) '())
+(check-is-hash? (get-body (list-buckets)))
+(check-is-hash? (get-body (list-buckets)))
+(check-equal? (get-body (put-object "test" "Example" '())) '())
+(check-is-hash? (get-body (list-keys "test")))
+(check-is-hash? (get-body (get-bucket "test")))
+(check-is-hash? (hash-ref (get-body (get-bucket "test")) 'props))
 (check-equal? ((λ ()
                   (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
-                  (get-object "test" "this-is-a-key")))
+                  (get-body (get-object "test" "this-is-a-key"))))
               #hasheq((isTest? . #t)))
 (check-true ((λ () 
                  (put-object "test" "this-is-a-key" (hasheq 'isTest? #t))
-                 (delete-object "test" "this-is-a-key"))))
+                 (get-body (delete-object "test" "this-is-a-key")))))
 (check-equal? ((λ () 
                  (put-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c" 
                              "this is a test" (list "Content-Type: text/plain"))
-                 (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c")))
+                 (get-body (get-object "test" "Hr05PhC5XRAtaWSGuBDCVU1T72c"))))
               "this is a test")
-(check-is-key? (post-object "test" (hasheq 'isTest? #t)))
+(check-is-key? (get-body (post-object "test" (hasheq 'isTest? #t))))
 
 
 ;; ;;Need to put some objects in first... else its a 404
