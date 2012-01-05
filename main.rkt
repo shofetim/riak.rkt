@@ -167,21 +167,23 @@
   (let* ([return-headers (parse-headers ip)]
          [status (hash-ref return-headers "status")]
          [content-type (hash-ref return-headers "Content-Type")])
-    (cond 
-     ;;Handle HTTP erros
-     [(and is-delete ;;a 404 is ok for a delete
-           (or (= (string->number status) 404)
-               (and
-                (< (string->number status) 300)
-                (> (string->number status) 199)))) #t]
-     [(> (string->number status) 299)
-      (error "HTTP errored with:" status)]
-     ;;Choose a reader
-     [(eof-object? (peek-char ip)) (check-headers return-headers)]
-     [(equal? content-type "application/json") (read-json ip)]
-     [(equal? content-type "text/html") (read-text/html ip)]
-     [(equal? content-type "text/plain") (read-text/plain ip)]
-     [else (error "No reader for content type:" content-type)])))
+    (hash 'headers return-headers
+          'message
+          (cond 
+           ;;Handle HTTP erros
+           [(and is-delete ;;a 404 is ok for a delete
+                 (or (= (string->number status) 404)
+                     (and
+                      (< (string->number status) 300)
+                      (> (string->number status) 199)))) #t]
+           [(> (string->number status) 299)
+            (error "HTTP errored with:" status)]
+           ;;Choose a reader
+           [(eof-object? (peek-char ip)) (check-headers return-headers)]
+           [(equal? content-type "application/json") (read-json ip)]
+           [(equal? content-type "text/html") (read-text/html ip)]
+           [(equal? content-type "text/plain") (read-text/plain ip)]
+           [else (error "No reader for content type:" content-type)]))))
 
 (define (parse-headers ip)
   (let* ([header-string (purify-port ip)]
