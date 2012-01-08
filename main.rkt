@@ -2,6 +2,7 @@
 (require net/url
          net/uri-codec
          net/head
+         net/mime
          "json.rkt"
          "config.rkt")
 
@@ -76,30 +77,17 @@
   (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
 
 ;;;; Needs more work
+;; TEST READING OF MULTIPART MESSAGES
 ;; Write tests for setting links
-;; Link walking needs to handle mime-multipart
 ;; get-object should return links
+;; Link walking needs to handle mime-multipart
+;; CLEANUP
 
 ;;Link Walking
-(define (get-link bucket key list-of-filters)
-  ;;List of filters is a list of 3 element hashes, bucket, tag, keep
-  (let ([data (format-filters list-of-filters)])
-    (request (string-append "/riak/" bucket "/" key) 
-             'get 
-             data)))
-
-(define (format-filters lst)
-  (if (empty? lst)
-      ""
-      (let ([head (car lst)]
-            [tail (rest lst)])
-        (string-append "/" 
-                       (hash-ref head 'bucket)
-                       ","
-                       (hash-ref head 'tag)
-                       ","
-                       (hash-ref head 'keep)
-                       (format-filters tail)))))
+(define (get-link bucket key filter-string)
+  (request (string-append "/buckets/" bucket "/keys/" key "/")
+           'get
+           filter-string))
 
 ;;Map Reduce
 (define (mapreduce data)
@@ -117,7 +105,6 @@
 ;;;; end more work
 
 ;;Private
-
 (define server (string-append "http://" host ":" port))
 
 (define (request path [type 'get] [data ""] [headers (list "")])
@@ -183,10 +170,62 @@
             (error "HTTP errored with:" status)]
            ;;Choose a reader
            [(eof-object? (peek-char ip)) (check-headers return-headers)]
+           [(regexp-match? #rx"multipart/mixed.*" content-type) (read-multi ip)]
            [(equal? content-type "application/json") (read-json ip)]
            [(equal? content-type "text/html") (read-text/html ip)]
            [(equal? content-type "text/plain") (read-text/plain ip)]
            [else (error "No reader for content type:" content-type)]))))
+
+(define (remove-eol ip)
+  (if (or (eq? (peek-char ip) #\return)
+          (eq? (peek-char ip) #\newline))
+      (begin
+        (read-char ip)
+        (remove-eol ip))
+      ip))
+
+(define (get-message-parts ip)
+  (let* ([analyzed (mime-analyze ip)]
+         [our-entity (message-entity analyzed)])
+    (entity-parts our-entity)))
+
+(define (read-message msg)
+  (let* ([body-proc (entity-body (message-entity msg))]
+         [tmp (open-output-string)]
+         [headers-list (map split-headers (message-fields msg))]
+         ;;The mime library eats the content type and doesn't give it back
+         [type (entity-type (message-entity msg))]
+         [sub-type  (entity-subtype (message-entity msg))]
+         [Content-Type (cons "Content-Type" 
+                             (string-append 
+                              (symbol->string type)
+                              "/"
+                              (symbol->string (if (symbol? sub-type)
+                                                  sub-type
+                                                  'json))))]
+         [headers (make-hash (cons Content-Type headers-list))]
+         [content-type (hash-ref headers "Content-Type")]
+         [nada (body-proc tmp)]
+         [body-str (get-output-string tmp)]
+         [ip (open-input-string body-str)])
+    (hash 'headers headers
+          'body (cond [(equal? content-type "application/json") (read-json ip)]
+                      [(equal? content-type "text/html") (read-text/html ip)]
+                      [(equal? content-type "text/plain") (read-text/plain ip)]
+                      [else (error "No reader for content type:" content-type)]))))
+
+
+(define (read-parts lst)
+  (if (eq? lst empty)
+      empty
+      (cons
+       (read-message (first lst))
+       (read-parts (rest lst)))))
+
+(define (read-multi ip)
+  (let* ([ip (remove-eol ip)]
+         [message-parts (get-message-parts ip)])
+    (read-parts message-parts)))
 
 (define (parse-headers ip)
   (let* ([header-string (purify-port ip)]
@@ -223,6 +262,8 @@
 
 (define (read-text ip)
   (port->string ip))
+
+
 
 ;; list of lists -> list of strings
 ;; (list (list 'bucket 'key 'tag) (list 'bucket 'key 'tag)) -> 
