@@ -1,5 +1,4 @@
 * Racket interface to Riak's HTTP API
-
 ** News
    - Added license
    - Updated functions to use newer URLs / endpoints
