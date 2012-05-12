@@ -3,7 +3,7 @@
          net/uri-codec
          net/head
          net/mime
-         "json.rkt"
+         json
          "config.rkt")
 
 ;; API
@@ -91,7 +91,7 @@
 
 ;;Map Reduce
 (define (mapreduce data)
-  (request (string-append "/mapred") 'post  data "Content-Type: application/json"))
+  (request (string-append "/mapred") 'post  data '("Content-Type: application/json")))
 
 ;;Secondary indexes
 ;;Only available in Riak 1.0 and latter
@@ -160,12 +160,13 @@
     (hash 'headers return-headers
           'body
           (cond 
-           ;;Handle HTTP erros
+           ;;Handle HTTP errors
            [(and is-delete ;;a 404 is ok for a delete
                  (or (= (string->number status) 404)
                      (and
                       (< (string->number status) 300)
                       (> (string->number status) 199)))) #t]
+           [(= (string->number status) 404) (hash)] ;;404s are really errors, they are just empy
            [(> (string->number status) 299)
             (error "HTTP errored with:" status)]
            ;;Choose a reader
