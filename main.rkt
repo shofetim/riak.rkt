@@ -6,20 +6,28 @@
          json
          "config.rkt")
 
-(provide ping
-         status
-         list-resources
-         list-buckets
+(provide list-buckets
          list-keys
          get-bucket
          put-bucket
          get-object
-         put-object
-         post-object
+         put-object  ;further work needed
+         post-object ;further work needed
          delete-object
-         get-link
-         mapreduce
-         get-index)
+         get-link    ;further work needed
+         mapreduce   ;further work needed
+         get-index   ;further work needed
+         ping
+         status
+         list-resources)
+
+;;;; Notes
+;; Insure we default JSON
+
+;; Maybe change to a struct? 
+;; Return a response object (hash? headers) (any/c body)
+;;   and maybe status and link
+
 
 ;;;; API
 
@@ -44,6 +52,9 @@
 
 
 ;; Object Operations
+(define (get-object bucket key)
+  (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))
+
 (define (put-object bucket key data 
                     [headers (list "Content-Type: application/json")] 
                     [links '()])
@@ -71,8 +82,6 @@
                  (make-link-pieces links))
                 headers))))
 
-(define (get-object bucket key)
-  (request "/buckets" 'get (string-append "/" bucket "/keys/" key)))
 
 (define (delete-object bucket key)
   (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
