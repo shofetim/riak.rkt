@@ -144,7 +144,7 @@
      (λ (url)
         (put-impure-port url 
                          (if (member "Content-Type: application/json" headers)
-                             (string->bytes/utf-8 (jsexpr->json data))
+                             (jsexpr->bytes data)
                              (string->bytes/utf-8 data))
                          `(,@(cons "User-Agent: racket"
                                    headers)
@@ -156,7 +156,7 @@
      (λ (url)
         (post-impure-port url 
                           (if (member "Content-Type: application/json" headers)
-                              (string->bytes/utf-8 (jsexpr->json data))
+                              (jsexpr->bytes data)
                               (string->bytes/utf-8 data))
                           `(,@(cons "User-Agent: racket"
                                     headers)
