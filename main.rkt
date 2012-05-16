@@ -6,22 +6,22 @@
          json
          "config.rkt")
 
-;; API
-;;Server Operations
-(define (ping)
-  (request "/ping"))
+(provide ping
+         status
+         list-resources
+         list-buckets
+         list-keys
+         get-bucket
+         put-bucket
+         get-object
+         put-object
+         post-object
+         delete-object
+         get-link
+         mapreduce
+         get-index)
 
-(define (status [format 'json])
-  (let ([accept-header (if (eq? format 'json)
-                           (list "Accept: application/json")
-                           (list "Accept: text/plain"))])
-    (request "/stats" 'get "" accept-header)))
-
-(define (list-resources [format 'json])
-  (let ([accept-header (if (eq? format 'json)
-                           (list "Accept: application/json")
-                           (list "Accept: text/html"))])
-    (request "/"  'get "" accept-header)))
+;;;; API
 
 ;; Bucket Operations
 (define (list-buckets) ;;EXPENSIVE!
@@ -41,6 +41,7 @@
 (define (put-bucket bucket props)
   (request (string-append "/buckets/" bucket "/props")
            'put props (list "Content-Type: application/json")))
+
 
 ;; Object Operations
 (define (put-object bucket key data 
@@ -76,6 +77,8 @@
 (define (delete-object bucket key)
   (request (string-append "/buckets/" bucket "/keys/" key) 'delete))
 
+;;Query operations
+
 ;;;; Needs more work
 ;; TEST READING OF MULTIPART MESSAGES
 ;; Write tests for setting links
@@ -103,6 +106,24 @@
              'get
              data)))
 ;;;; end more work
+
+;;Server Operations
+(define (ping)
+  (request "/ping"))
+
+(define (status [format 'json])
+  (let ([accept-header (if (eq? format 'json)
+                           (list "Accept: application/json")
+                           (list "Accept: text/plain"))])
+    (request "/stats" 'get "" accept-header)))
+
+(define (list-resources [format 'json])
+  (let ([accept-header (if (eq? format 'json)
+                           (list "Accept: application/json")
+                           (list "Accept: text/html"))])
+    (request "/"  'get "" accept-header)))
+
+
 
 ;;Private
 (define server (string-append "http://" host ":" port))
@@ -264,8 +285,6 @@
 (define (read-text ip)
   (port->string ip))
 
-
-
 ;; list of lists -> list of strings
 ;; (list (list 'bucket 'key 'tag) (list 'bucket 'key 'tag)) -> 
 ;; (list <PATH>; riaktag="TAG" <PATH>; riaktag="TAG")
@@ -292,17 +311,3 @@
     (format "Link: ~a" 
             (apply string-append spaced-lst))))
 
-(provide ping
-         status
-         list-resources
-         list-buckets
-         list-keys
-         get-bucket
-         put-bucket
-         get-object
-         put-object
-         post-object
-         delete-object
-         get-link
-         mapreduce
-         get-index)
